@@ -11,6 +11,13 @@ import LoadingAnimation from '@/components/LoadingAnimation';
 import FollowUpQuestions from '@/components/FollowUpQuestions';
 import WuxingLotus from '@/components/WuxingLotus';
 import FortuneTimeline from '@/components/FortuneTimeline';
+import AuthModal from '@/components/AuthModal';
+import { createClient } from '@/lib/supabase/client';
+
+interface SimpleUser {
+  id: string;
+  username: string;
+}
 
 // 時辰對應小時
 const SHICHEN_TO_HOUR: Record<string, number> = {
@@ -38,13 +45,86 @@ function ComprehensiveResultContent() {
   const [interpretation, setInterpretation] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [followUpHistory, setFollowUpHistory] = useState<FollowUpItem[]>([]);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
+  const [user, setUser] = useState<SimpleUser | null>(null);
+  const [showAuth, setShowAuth] = useState(false);
   const interpretationRef = useRef<HTMLDivElement>(null);
+  const supabase = createClient();
   
+  const name = searchParams.get('name') || '未命名';
   const year = parseInt(searchParams.get('year') || '0');
   const month = parseInt(searchParams.get('month') || '0');
   const day = parseInt(searchParams.get('day') || '0');
   const shichen = searchParams.get('shichen') || '';
   const gender = searchParams.get('gender') as 'male' | 'female';
+
+  // 檢查登入狀態（從 localStorage）
+  useEffect(() => {
+    const savedUser = localStorage.getItem('fortune_user');
+    if (savedUser) {
+      setUser(JSON.parse(savedUser));
+    }
+  }, []);
+
+  // 保存紀錄到 Supabase
+  const handleSaveReading = async () => {
+    if (!interpretation || isSaving || isSaved) return;
+
+    // 如果未登入，顯示登入彈窗
+    if (!user) {
+      setShowAuth(true);
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const { error } = await supabase.from('readings').insert({
+        user_id: user.id,
+        name,
+        birth_info: { year, month, day, hour: shichen, gender },
+        interpretation,
+        reading_type: 'comprehensive',
+      });
+
+      if (error) {
+        console.error('保存失敗:', error);
+        alert('保存失敗，請稍後再試');
+      } else {
+        setIsSaved(true);
+      }
+    } catch (e) {
+      console.error('保存錯誤:', e);
+      alert('保存失敗');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // 登入成功後的處理
+  const handleAuthSuccess = async (newUser: SimpleUser) => {
+    setUser(newUser);
+    // 自動觸發保存
+    if (newUser && interpretation && !isSaved) {
+      setIsSaving(true);
+      try {
+        const { error } = await supabase.from('readings').insert({
+          user_id: newUser.id,
+          name,
+          birth_info: { year, month, day, hour: shichen, gender },
+          interpretation,
+          reading_type: 'comprehensive',
+        });
+        if (!error) {
+          setIsSaved(true);
+        }
+      } catch (e) {
+        console.error('保存錯誤:', e);
+      } finally {
+        setIsSaving(false);
+      }
+    }
+  };
   
   // 計算紫微命盤
   const ziweiChart = useMemo(() => {
@@ -83,7 +163,7 @@ function ComprehensiveResultContent() {
     if (!ziweiChart || !baziResult || isLoading) return;
 
     setIsLoading(true);
-    setInterpretation(null);
+    setInterpretation('');
     
     // 自動滾動到解讀區域
     setTimeout(() => {
@@ -101,12 +181,44 @@ function ComprehensiveResultContent() {
         }),
       });
 
-      const data = await response.json();
+      if (!response.ok) {
+        throw new Error('API 回應錯誤');
+      }
 
-      if (data.success) {
-        setInterpretation(data.interpretation);
-      } else {
-        setInterpretation('❌ ' + (data.error || '解讀生成失敗'));
+      // 處理 Streaming 回應
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+      let fullText = '';
+
+      if (reader) {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          const chunk = decoder.decode(value, { stream: true });
+          const lines = chunk.split('\n');
+
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              try {
+                const data = JSON.parse(line.slice(6));
+                if (data.text) {
+                  fullText += data.text;
+                  setInterpretation(fullText);
+                }
+                if (data.done) {
+                  setIsLoading(false);
+                }
+                if (data.error) {
+                  setInterpretation('❌ ' + data.error);
+                  setIsLoading(false);
+                }
+              } catch (e) {
+                // 忽略解析錯誤
+              }
+            }
+          }
+        }
       }
     } catch (error) {
       console.error('API 錯誤:', error);
@@ -479,6 +591,46 @@ function ComprehensiveResultContent() {
               </>
             ) : null}
 
+            {/* 保存按鈕 */}
+            {!isLoading && interpretation && (
+              <div className="mt-6 flex flex-col items-center gap-3 print:hidden">
+                <button
+                  onClick={handleSaveReading}
+                  disabled={isSaving || isSaved}
+                  className={`flex items-center gap-2 px-6 py-3 rounded-full font-medium transition-all
+                    ${isSaved 
+                      ? 'bg-green-500/20 text-green-300 border border-green-500/30' 
+                      : 'bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:opacity-90'
+                    }`}
+                >
+                  {isSaving ? (
+                    <>
+                      <span className="animate-spin">⏳</span>
+                      <span>保存中...</span>
+                    </>
+                  ) : isSaved ? (
+                    <>
+                      <span>✅</span>
+                      <span>已保存到我的紀錄</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>💾</span>
+                      <span>保存此解讀</span>
+                    </>
+                  )}
+                </button>
+                {isSaved && (
+                  <Link 
+                    href="/my-readings" 
+                    className="text-purple-400 hover:text-purple-300 text-sm underline"
+                  >
+                    查看我的紀錄 →
+                  </Link>
+                )}
+              </div>
+            )}
+
             {/* 底部提示 */}
             {!isLoading && interpretation && (
               <div className="mt-8 pt-4 border-t border-amber-500/20 text-center print:border-gray-300">
@@ -490,6 +642,13 @@ function ComprehensiveResultContent() {
           </div>
         )}
       </div>
+
+      {/* 登入彈窗 */}
+      <AuthModal 
+        isOpen={showAuth} 
+        onClose={() => setShowAuth(false)}
+        onSuccess={handleAuthSuccess}
+      />
     </main>
   );
 }

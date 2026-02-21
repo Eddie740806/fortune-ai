@@ -19,9 +19,12 @@ const SHICHEN = [
   { value: '亥', label: '亥時 (21:00-23:00)' },
 ];
 
+const STORAGE_KEY = 'haoyundashi_user_data';
+
 export default function ZiweiPage() {
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
+  const [rememberMe, setRememberMe] = useState(true);
   const [formData, setFormData] = useState({
     name: '',
     year: '',
@@ -31,12 +34,32 @@ export default function ZiweiPage() {
     gender: '',
   });
 
+  // 從 localStorage 讀取之前儲存的資料
   useEffect(() => {
     setMounted(true);
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        setFormData(prev => ({ ...prev, ...parsed }));
+      }
+    } catch (e) {
+      console.log('無法讀取儲存的資料');
+    }
   }, []);
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
+    
+    // 如果勾選「記住我」，儲存資料到 localStorage
+    if (rememberMe) {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(formData));
+      } catch (e) {
+        console.log('無法儲存資料');
+      }
+    }
+    
     // 記錄到 Google Sheet
     logUsage('紫微', '填寫資料', undefined, formData);
     const params = new URLSearchParams(formData);
@@ -237,6 +260,19 @@ export default function ZiweiPage() {
                   </button>
                 </div>
               </div>
+
+              {/* 記住我的資料 */}
+              <label className="flex items-center gap-3 cursor-pointer group">
+                <input
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  className="w-5 h-5 rounded border-2 border-purple-400/50 bg-indigo-950/50 text-purple-500 focus:ring-purple-400/30 focus:ring-offset-0 cursor-pointer"
+                />
+                <span className="text-purple-300/80 group-hover:text-purple-200 transition-colors">
+                  記住我的資料（下次不用重填）
+                </span>
+              </label>
 
               {/* 提交按鈕 */}
               <button

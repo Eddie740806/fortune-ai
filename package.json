@@ -11,6 +11,10 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.77.0",
     "@google/generative-ai": "^0.24.1",
+    "@supabase/ssr": "^0.8.0",
+    "@supabase/supabase-js": "^2.97.0",
+    "@types/bcryptjs": "^2.4.6",
+    "bcryptjs": "^3.0.3",
     "googleapis": "^171.4.0",
     "lunar-javascript": "^1.7.7",
     "next": "16.1.6",

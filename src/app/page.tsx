@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { siteConfig } from "@/config/site";
 
 export default function Home() {
@@ -199,6 +200,13 @@ export default function Home() {
             <a href="/fengshui" className="px-10 py-5 bg-gradient-to-r from-amber-600/80 to-purple-600/80 rounded-xl font-bold text-xl text-white border-2 border-amber-400/50 hover:border-amber-300 transition-all duration-300 hover:scale-105">
               🧭 居家風水
             </a>
+
+            {/* 我的紀錄 - 更明顯的入口 */}
+            <a href="/my-readings" className="mt-4 px-8 py-4 bg-white/10 hover:bg-white/20 backdrop-blur-sm rounded-xl font-medium text-lg text-white/90 border border-white/30 hover:border-white/50 transition-all duration-300 hover:scale-105 flex items-center gap-2">
+              <span>📋</span>
+              <span>我的紀錄</span>
+              <span className="text-sm text-white/60">（登入查看歷史解讀）</span>
+            </a>
           </div>
 
         </section>
@@ -350,6 +358,7 @@ export default function Home() {
           animation: drift-reverse 25s ease-in-out infinite;
         }
       `}</style>
+
     </main>
   );
 }

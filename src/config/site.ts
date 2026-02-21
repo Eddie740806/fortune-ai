@@ -1,19 +1,19 @@
 /**
- * 網站設定檔 - 算你準
- * Site Configuration - SuanNiZhun
+ * 網站設定檔 - 好運大師
+ * Site Configuration - HaoYunDaShi
  */
 
 export const siteConfig = {
   // ===== 基本資訊 =====
-  name: "算你準",
-  tagline: "AI 命理 · 精準解盤",
-  description: "融合《窮通寶鑑》、《滴天髓》、《紫微斗數大全》等命理經典，結合 AI 科技為您解讀八字與紫微命盤",
-  keywords: "八字, 紫微斗數, 算命, 命理, AI, 算你準, 窮通寶鑑, 滴天髓",
+  name: "好運大師",
+  tagline: "AI 命理 · 深度解盤",
+  description: "融合《窮通寶鑑》、《滴天髓》、《紫微斗數大全》等命理經典，結合 AI 科技為您深度解讀八字與紫微命盤",
+  keywords: "八字, 紫微斗數, 算命, 命理, AI, 好運大師, 窮通寶鑑, 滴天髓",
   
   // ===== 首頁文案 =====
   hero: {
     subtitle: "✦ 八字命理 · 紫微斗數 ✦",
-    slogan: "融合千年古籍智慧，以 AI 科技為您精準解盤",
+    slogan: "融合千年古籍智慧，以 AI 科技為您深度解盤",
   },
   
   // ===== 特色區塊 =====
@@ -30,7 +30,7 @@ export const siteConfig = {
   
   // ===== Footer =====
   footer: {
-    text: "算你準 · AI 命理平台",
+    text: "好運大師 · AI 命理平台",
     credit: "Made with ✨ by Eddie",
   },
   
