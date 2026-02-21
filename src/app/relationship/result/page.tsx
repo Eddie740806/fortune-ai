@@ -4,7 +4,13 @@ import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import ReactMarkdown from 'react-markdown';
-import { calculateBazi, type BaziResult } from '@/lib/bazi';
+import { calculateBazi, type BaziResult, DI_ZHI } from '@/lib/bazi';
+
+// 時辰對應小時
+const SHICHEN_TO_HOUR: Record<string, number> = {
+  '子': 23, '丑': 1, '寅': 3, '卯': 5, '辰': 7, '巳': 9,
+  '午': 11, '未': 13, '申': 15, '酉': 17, '戌': 19, '亥': 21, '未知': 0,
+};
 import LoadingAnimation from '@/components/LoadingAnimation';
 
 interface PersonInfo {
@@ -72,9 +78,11 @@ function RelationshipResultContent() {
       return;
     }
 
-    // 計算八字
-    my.bazi = calculateBazi(my.year, my.month, my.day, my.hour, my.gender as 'male' | 'female');
-    partner.bazi = calculateBazi(partner.year, partner.month, partner.day, partner.hour, partner.gender as 'male' | 'female');
+    // 計算八字（時辰轉小時）
+    const myHourNum = SHICHEN_TO_HOUR[my.hour] ?? 0;
+    const partnerHourNum = SHICHEN_TO_HOUR[partner.hour] ?? 0;
+    my.bazi = calculateBazi(my.year, my.month, my.day, myHourNum, 0, my.gender as 'male' | 'female');
+    partner.bazi = calculateBazi(partner.year, partner.month, partner.day, partnerHourNum, 0, partner.gender as 'male' | 'female');
 
     setMyInfo(my);
     setPartnerInfo(partner);
@@ -140,7 +148,7 @@ function RelationshipResultContent() {
     return (
       <div className="min-h-screen bg-gradient-to-b from-[#0a0a1a] via-[#1a1a3a] to-[#0a0a1a] flex items-center justify-center">
         <div className="text-center">
-          <LoadingAnimation />
+          <LoadingAnimation type="comprehensive" />
           <p className="text-white/60 mt-4">正在分析你們的緣分...</p>
           <p className="text-white/40 text-sm mt-2">結合八字命理，為你解讀關係奧秘</p>
         </div>
