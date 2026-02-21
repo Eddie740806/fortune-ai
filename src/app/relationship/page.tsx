@@ -81,13 +81,15 @@ function RelationshipContent() {
   }, [myReadingId, myReadings]);
 
   const fetchMyReadings = async () => {
-    const supabase = createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    
-    if (!user) {
+    // 從 localStorage 讀取用戶資訊（跟 my-readings 頁面一致）
+    const savedUser = localStorage.getItem('fortune_user');
+    if (!savedUser) {
       router.push('/');
       return;
     }
+    
+    const user = JSON.parse(savedUser);
+    const supabase = createClient();
 
     const { data, error } = await supabase
       .from('readings')
