@@ -1,0 +1,21 @@
+{
+  "name": "算你準 - AI 命理平台",
+  "short_name": "算你準",
+  "description": "融合千年古籍智慧，以 AI 科技為您精準解盤",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0a1a",
+  "theme_color": "#7c3aed",
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

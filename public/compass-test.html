@@ -1,0 +1,1279 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>🧭 風水羅盤 - J個準</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Noto Sans TC', sans-serif;
+      background: linear-gradient(180deg, #0a0a1a 0%, #1a1a3a 50%, #0d0d2b 100%);
+      color: white;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+    
+    .container {
+      max-width: 400px;
+      margin: 0 auto;
+      padding: 15px;
+      min-height: 100vh;
+    }
+    
+    /* 頂部標題 */
+    .header {
+      text-align: center;
+      padding: 15px 0;
+    }
+    
+    .header h1 {
+      font-size: 26px;
+      background: linear-gradient(135deg, #ffd700, #ff8c00);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 5px;
+    }
+    
+    .header p {
+      color: rgba(255,255,255,0.6);
+      font-size: 13px;
+    }
+    
+    /* 授權提示區塊 */
+    .permission-box {
+      background: linear-gradient(135deg, rgba(255,107,107,0.3), rgba(255,159,67,0.3));
+      border: 2px solid #ff6b6b;
+      border-radius: 16px;
+      padding: 16px;
+      margin-bottom: 15px;
+      text-align: center;
+      animation: pulse-border 2s infinite;
+    }
+    
+    @keyframes pulse-border {
+      0%, 100% { border-color: #ff6b6b; box-shadow: 0 0 20px rgba(255,107,107,0.3); }
+      50% { border-color: #ffd700; box-shadow: 0 0 30px rgba(255,215,0,0.4); }
+    }
+    
+    .permission-box.granted {
+      background: linear-gradient(135deg, rgba(74,222,128,0.2), rgba(34,197,94,0.2));
+      border-color: #4ade80;
+      animation: none;
+    }
+    
+    .permission-box h3 {
+      font-size: 16px;
+      margin-bottom: 10px;
+    }
+    
+    .permission-box p {
+      font-size: 13px;
+      color: rgba(255,255,255,0.8);
+      margin-bottom: 12px;
+    }
+    
+    .btn-permission {
+      width: 100%;
+      padding: 14px 20px;
+      font-size: 16px;
+      font-weight: bold;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      background: linear-gradient(135deg, #ff6b6b, #ff8c00);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    
+    .btn-permission:disabled {
+      background: linear-gradient(135deg, #4ade80, #22c55e);
+    }
+    
+    /* 羅盤區塊 */
+    .compass-section {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 10px 0;
+    }
+    
+    .compass-wrapper {
+      position: relative;
+      width: 260px;
+      height: 260px;
+    }
+    
+    /* 羅盤 SVG */
+    .compass-svg {
+      width: 100%;
+      height: 100%;
+      filter: drop-shadow(0 0 20px rgba(255,215,0,0.3));
+    }
+    
+    /* 指針容器 */
+    .needle-wrapper {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      transition: transform 0.2s ease-out;
+    }
+    
+    /* 度數顯示 */
+    .degree-display {
+      text-align: center;
+      margin-top: 15px;
+    }
+    
+    .degree-value {
+      font-size: 48px;
+      font-weight: bold;
+      background: linear-gradient(135deg, #ffd700, #ff8c00);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    .direction-text {
+      font-size: 22px;
+      color: #4ade80;
+      margin-top: 3px;
+    }
+    
+    /* 拍照區塊 */
+    .photo-section {
+      padding: 15px 0;
+    }
+    
+    .btn-photo {
+      width: 100%;
+      padding: 16px 20px;
+      font-size: 18px;
+      font-weight: bold;
+      border: none;
+      border-radius: 14px;
+      cursor: pointer;
+      background: linear-gradient(135deg, #ffd700, #ff8c00);
+      color: #1a1a2e;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    
+    .btn-photo:disabled {
+      background: #444;
+      color: #888;
+    }
+    
+    #camera-input { display: none; }
+    
+    /* 位置選擇 */
+    .location-selector {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.95);
+      z-index: 999;
+      padding: 20px;
+      overflow-y: auto;
+    }
+    
+    .location-selector.show {
+      display: block;
+      animation: fadeIn 0.2s ease;
+    }
+    
+    .location-header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    
+    .location-header h2 {
+      font-size: 22px;
+      background: linear-gradient(135deg, #ffd700, #ff8c00);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 8px;
+    }
+    
+    .location-header p {
+      color: rgba(255,255,255,0.6);
+      font-size: 14px;
+    }
+    
+    .location-section {
+      margin-bottom: 20px;
+    }
+    
+    .location-section-title {
+      color: rgba(255,255,255,0.5);
+      font-size: 12px;
+      margin-bottom: 10px;
+      padding-left: 5px;
+    }
+    
+    .location-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+    
+    .location-btn {
+      padding: 16px 10px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,215,0,0.3);
+      border-radius: 12px;
+      color: white;
+      font-size: 14px;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.2s;
+    }
+    
+    .location-btn:hover, .location-btn:active {
+      background: rgba(255,215,0,0.2);
+      border-color: #ffd700;
+      transform: scale(1.02);
+    }
+    
+    .location-btn-icon {
+      font-size: 24px;
+      display: block;
+      margin-bottom: 5px;
+    }
+    
+    .location-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    
+    .location-btn-full {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      width: 100%;
+      padding: 14px;
+      background: rgba(255,215,0,0.1);
+      border: 1px solid rgba(255,215,0,0.3);
+      border-radius: 12px;
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+      text-align: left;
+      transition: all 0.2s;
+    }
+    
+    .location-btn-full:hover, .location-btn-full:active {
+      background: rgba(255,215,0,0.2);
+      border-color: #ffd700;
+    }
+    
+    .location-btn-full .location-btn-icon {
+      font-size: 28px;
+      margin-bottom: 0;
+    }
+    
+    .location-btn-text {
+      flex: 1;
+    }
+    
+    .location-btn-hint {
+      font-size: 12px;
+      color: #60a5fa;
+      margin-top: 2px;
+    }
+    
+    .location-custom {
+      margin-top: 15px;
+    }
+    
+    .location-custom-input {
+      width: 100%;
+      padding: 14px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 12px;
+      color: white;
+      font-size: 16px;
+      margin-bottom: 10px;
+    }
+    
+    .location-custom-input::placeholder {
+      color: rgba(255,255,255,0.4);
+    }
+    
+    .location-custom-input:focus {
+      outline: none;
+      border-color: #ffd700;
+    }
+    
+    .location-cancel {
+      width: 100%;
+      padding: 14px;
+      background: transparent;
+      border: 1px solid rgba(255,255,255,0.3);
+      border-radius: 12px;
+      color: rgba(255,255,255,0.7);
+      font-size: 16px;
+      cursor: pointer;
+      margin-top: 15px;
+    }
+    
+    /* 拍攝指南 */
+    .guide-checklist {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    
+    .guide-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 12px;
+      padding: 12px;
+    }
+    
+    .guide-item.important {
+      border-color: rgba(255,215,0,0.3);
+      background: rgba(255,215,0,0.05);
+    }
+    
+    .guide-icon {
+      font-size: 28px;
+      width: 40px;
+      text-align: center;
+    }
+    
+    .guide-text {
+      flex: 1;
+    }
+    
+    .guide-name {
+      font-weight: bold;
+      font-size: 15px;
+    }
+    
+    .guide-desc {
+      color: rgba(255,255,255,0.6);
+      font-size: 12px;
+      margin-top: 2px;
+    }
+    
+    .guide-tag {
+      background: linear-gradient(135deg, #ffd700, #ff8c00);
+      color: #1a1a2e;
+      font-size: 11px;
+      font-weight: bold;
+      padding: 4px 8px;
+      border-radius: 6px;
+    }
+    
+    .guide-direction {
+      display: block;
+      background: rgba(96,165,250,0.2);
+      color: #60a5fa;
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 12px;
+      margin-bottom: 4px;
+      font-weight: bold;
+    }
+    
+    .guide-tip {
+      background: rgba(74,222,128,0.1);
+      border: 1px solid rgba(74,222,128,0.3);
+      border-radius: 12px;
+      padding: 12px;
+      margin-top: 15px;
+      font-size: 13px;
+      color: rgba(255,255,255,0.8);
+    }
+    
+    .guide-tip strong {
+      color: #4ade80;
+    }
+    
+    /* 剛拍完的大預覽 */
+    .photo-preview-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.9);
+      z-index: 1000;
+      padding: 20px;
+      animation: fadeIn 0.3s ease;
+    }
+    
+    .photo-preview-overlay.show {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    
+    .preview-card {
+      background: linear-gradient(135deg, #1a1a3a, #0d0d2b);
+      border: 2px solid #ffd700;
+      border-radius: 20px;
+      overflow: hidden;
+      max-width: 340px;
+      width: 100%;
+      animation: scaleIn 0.3s ease;
+      box-shadow: 0 0 40px rgba(255,215,0,0.3);
+    }
+    
+    @keyframes scaleIn {
+      from { transform: scale(0.8); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+    
+    .preview-header {
+      background: linear-gradient(135deg, #ffd700, #ff8c00);
+      color: #1a1a2e;
+      text-align: center;
+      padding: 12px;
+      font-size: 18px;
+      font-weight: bold;
+    }
+    
+    .preview-image {
+      width: 100%;
+      aspect-ratio: 4/3;
+      object-fit: cover;
+    }
+    
+    .preview-info {
+      padding: 20px;
+      text-align: center;
+    }
+    
+    .preview-location {
+      font-size: 18px;
+      color: #60a5fa;
+      margin-bottom: 10px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    
+    .preview-direction {
+      font-size: 42px;
+      font-weight: bold;
+      background: linear-gradient(135deg, #ffd700, #ff8c00);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    .preview-degree {
+      font-size: 24px;
+      color: #4ade80;
+      margin-top: 5px;
+    }
+    
+    .preview-time {
+      color: rgba(255,255,255,0.6);
+      font-size: 14px;
+      margin-top: 10px;
+    }
+    
+    .preview-buttons {
+      display: flex;
+      gap: 10px;
+      padding: 0 20px 20px;
+    }
+    
+    .preview-btn {
+      flex: 1;
+      padding: 14px;
+      border: none;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    
+    .preview-btn-more {
+      background: linear-gradient(135deg, #ffd700, #ff8c00);
+      color: #1a1a2e;
+    }
+    
+    .preview-btn-done {
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.3);
+      color: white;
+    }
+    
+    /* 照片計數 */
+    .photo-count {
+      text-align: center;
+      color: rgba(255,255,255,0.7);
+      font-size: 14px;
+      margin-bottom: 12px;
+    }
+    
+    .photo-count span {
+      color: #ffd700;
+      font-weight: bold;
+    }
+    
+    /* 照片列表 */
+    .photo-list {
+      display: flex;
+      gap: 10px;
+      overflow-x: auto;
+      padding: 10px 0;
+      scroll-snap-type: x mandatory;
+      -webkit-overflow-scrolling: touch;
+    }
+    
+    .photo-list::-webkit-scrollbar {
+      height: 6px;
+    }
+    
+    .photo-list::-webkit-scrollbar-track {
+      background: rgba(255,255,255,0.1);
+      border-radius: 3px;
+    }
+    
+    .photo-list::-webkit-scrollbar-thumb {
+      background: rgba(255,215,0,0.5);
+      border-radius: 3px;
+    }
+    
+    .photo-card {
+      flex-shrink: 0;
+      width: 140px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,215,0,0.3);
+      border-radius: 12px;
+      overflow: hidden;
+      scroll-snap-align: start;
+      position: relative;
+    }
+    
+    .photo-card img {
+      width: 100%;
+      height: 100px;
+      object-fit: cover;
+    }
+    
+    .photo-card-info {
+      padding: 8px;
+      font-size: 11px;
+    }
+    
+    .photo-card-location {
+      color: #60a5fa;
+      font-size: 12px;
+      margin-bottom: 3px;
+    }
+    
+    .photo-card-direction {
+      color: #ffd700;
+      font-weight: bold;
+      font-size: 14px;
+    }
+    
+    .photo-card-time {
+      color: rgba(255,255,255,0.6);
+      margin-top: 2px;
+    }
+    
+    .photo-card-delete {
+      position: absolute;
+      top: 5px;
+      right: 5px;
+      width: 24px;
+      height: 24px;
+      background: rgba(239,68,68,0.9);
+      border: none;
+      border-radius: 50%;
+      color: white;
+      font-size: 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    /* 動作按鈕 */
+    .action-buttons {
+      display: none;
+      gap: 10px;
+      margin-top: 12px;
+    }
+    
+    .action-buttons.show {
+      display: flex;
+    }
+    
+    .btn-action {
+      flex: 1;
+      padding: 12px;
+      font-size: 14px;
+      font-weight: bold;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+    }
+    
+    .btn-clear {
+      background: rgba(239,68,68,0.2);
+      border: 1px solid #ef4444;
+      color: #ef4444;
+    }
+    
+    .btn-analyze {
+      background: linear-gradient(135deg, #a855f7, #7c3aed);
+      color: white;
+    }
+    
+    /* 提示 */
+    .hint {
+      text-align: center;
+      color: rgba(255,255,255,0.5);
+      font-size: 12px;
+      margin-top: 12px;
+    }
+    
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- 標題 -->
+    <div class="header">
+      <h1>🧭 風水羅盤</h1>
+      <p>記錄空間方位，分析風水格局</p>
+    </div>
+    
+    <!-- 授權提示 (iPhone) -->
+    <div class="permission-box" id="permission-box">
+      <h3>📱 需要羅盤權限</h3>
+      <p>請先授權使用手機羅盤功能</p>
+      <button class="btn-permission" id="btn-permission" onclick="requestPermission()">
+        🔓 點我授權羅盤
+      </button>
+    </div>
+    
+    <!-- 已啟用提示 (Android/其他) -->
+    <div class="permission-box granted hidden" id="ready-box">
+      <h3>✅ 羅盤已啟用</h3>
+      <p>請對準方向後拍照記錄</p>
+    </div>
+    
+    <!-- 羅盤 -->
+    <div class="compass-section">
+      <div class="compass-wrapper">
+        <svg class="compass-svg" viewBox="0 0 260 260">
+          <!-- 外圈漸層 -->
+          <defs>
+            <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" style="stop-color:#ffd700"/>
+              <stop offset="100%" style="stop-color:#ff8c00"/>
+            </linearGradient>
+            <radialGradient id="bgGrad" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" style="stop-color:#2a2a4a"/>
+              <stop offset="100%" style="stop-color:#0a0a1a"/>
+            </radialGradient>
+            <filter id="glow">
+              <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+              <feMerge>
+                <feMergeNode in="coloredBlur"/>
+                <feMergeNode in="SourceGraphic"/>
+              </feMerge>
+            </filter>
+          </defs>
+          
+          <!-- 外圈 -->
+          <circle cx="130" cy="130" r="125" fill="url(#bgGrad)" stroke="url(#goldGrad)" stroke-width="3"/>
+          
+          <!-- 刻度 -->
+          <g id="ticks">
+            <!-- 每 10° 的刻度 -->
+            <script>
+              // 動態生成刻度會在下面的 JS 處理
+            </script>
+          </g>
+          
+          <!-- 主要方位文字 -->
+          <text x="130" y="35" text-anchor="middle" fill="#ef4444" font-size="18" font-weight="bold" filter="url(#glow)">北</text>
+          <text x="130" y="235" text-anchor="middle" fill="#ffd700" font-size="18" font-weight="bold">南</text>
+          <text x="230" y="135" text-anchor="middle" fill="#4ade80" font-size="18" font-weight="bold">東</text>
+          <text x="30" y="135" text-anchor="middle" fill="#60a5fa" font-size="18" font-weight="bold">西</text>
+          
+          <!-- 次要方位 -->
+          <text x="200" y="55" text-anchor="middle" fill="rgba(255,215,0,0.6)" font-size="12">東北</text>
+          <text x="200" y="215" text-anchor="middle" fill="rgba(255,215,0,0.6)" font-size="12">東南</text>
+          <text x="60" y="215" text-anchor="middle" fill="rgba(255,215,0,0.6)" font-size="12">西南</text>
+          <text x="60" y="55" text-anchor="middle" fill="rgba(255,215,0,0.6)" font-size="12">西北</text>
+          
+          <!-- 內圈 -->
+          <circle cx="130" cy="130" r="60" fill="none" stroke="rgba(255,215,0,0.3)" stroke-width="1"/>
+          <circle cx="130" cy="130" r="40" fill="none" stroke="rgba(255,215,0,0.2)" stroke-width="1"/>
+        </svg>
+        
+        <!-- 指針 (獨立層，會旋轉) -->
+        <div class="needle-wrapper" id="needle-wrapper">
+          <svg viewBox="0 0 260 260" style="width:100%;height:100%;">
+            <!-- 北針 (紅) -->
+            <polygon points="130,30 125,130 135,130" fill="#ef4444" filter="url(#glow)"/>
+            <!-- 南針 (金) -->
+            <polygon points="130,230 125,130 135,130" fill="#ffd700"/>
+            <!-- 中心點 -->
+            <circle cx="130" cy="130" r="12" fill="url(#goldGrad)"/>
+            <circle cx="130" cy="130" r="6" fill="#1a1a2e"/>
+          </svg>
+        </div>
+      </div>
+      
+      <!-- 度數顯示 -->
+      <div class="degree-display">
+        <div class="degree-value" id="degree-value">--°</div>
+        <div class="direction-text" id="direction-text">等待授權...</div>
+      </div>
+    </div>
+    
+    <!-- 拍照區塊 -->
+    <div class="photo-section">
+      <button class="btn-photo" id="btn-photo" onclick="takePhoto()" disabled>
+        📷 拍照記錄方位
+      </button>
+      
+      <input type="file" id="camera-input" accept="image/*" capture="environment" onchange="handlePhoto(event)">
+      
+      <!-- 拍攝建議指南 -->
+      <div class="location-selector" id="guide-overlay">
+        <div class="location-header">
+          <h2>📸 風水拍攝指南</h2>
+          <p>建議拍攝以下位置，方便分析風水格局</p>
+        </div>
+        
+        <div class="guide-checklist">
+          <div class="guide-item important">
+            <span class="guide-icon">🚪</span>
+            <div class="guide-text">
+              <div class="guide-name">大門朝向</div>
+              <div class="guide-desc">
+                <span class="guide-direction">🧍室內 → 📷門外</span>
+                站在門內，手機對著門外拍
+              </div>
+            </div>
+            <span class="guide-tag">必拍</span>
+          </div>
+          <div class="guide-item important">
+            <span class="guide-icon">🛋️</span>
+            <div class="guide-text">
+              <div class="guide-name">客廳座位</div>
+              <div class="guide-desc">
+                <span class="guide-direction">🧍沙發 → 📷電視</span>
+                坐在沙發上，對著電視/前方拍
+              </div>
+            </div>
+            <span class="guide-tag">必拍</span>
+          </div>
+          <div class="guide-item important">
+            <span class="guide-icon">🛏️</span>
+            <div class="guide-text">
+              <div class="guide-name">床位方向</div>
+              <div class="guide-desc">
+                <span class="guide-direction">🧍床頭 → 📷床尾</span>
+                坐在床頭，對著床尾方向拍
+              </div>
+            </div>
+            <span class="guide-tag">必拍</span>
+          </div>
+          <div class="guide-item">
+            <span class="guide-icon">🍳</span>
+            <div class="guide-text">
+              <div class="guide-name">廚房爐灶</div>
+              <div class="guide-desc">
+                <span class="guide-direction">🧍爐灶後 → 📷爐灶前</span>
+                站在炒菜位置，對著前方拍
+              </div>
+            </div>
+          </div>
+          <div class="guide-item">
+            <span class="guide-icon">💼</span>
+            <div class="guide-text">
+              <div class="guide-name">辦公桌/書桌</div>
+              <div class="guide-desc">
+                <span class="guide-direction">🧍座位 → 📷前方</span>
+                坐在椅子上，對著工作時看的方向拍
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="guide-tip">
+          💡 <strong>拍攝原則：</strong>站/坐在你平常待的位置，手機對著你面向的方向拍
+        </div>
+        
+        <button class="btn-photo" onclick="startFromGuide()" style="margin-top:20px;">
+          ✨ 我知道了，開始拍照
+        </button>
+        <button class="location-cancel" onclick="closeGuide()">取消</button>
+      </div>
+      
+      <!-- 位置選擇（拍照後） -->
+      <div class="location-selector" id="location-selector">
+        <div class="location-header">
+          <h2>📍 剛剛拍的是哪裡？</h2>
+          <p>選擇位置以完成記錄</p>
+        </div>
+        
+        <div class="location-section">
+          <div class="location-section-title">⭐ 重要位置</div>
+          <div class="location-list">
+            <button class="location-btn-full" onclick="selectLocation('🚪', '大門')">
+              <span class="location-btn-icon">🚪</span>
+              <div class="location-btn-text">
+                <div>大門</div>
+                <div class="location-btn-hint">室內→門外</div>
+              </div>
+            </button>
+            <button class="location-btn-full" onclick="selectLocation('🛋️', '客廳')">
+              <span class="location-btn-icon">🛋️</span>
+              <div class="location-btn-text">
+                <div>客廳座位</div>
+                <div class="location-btn-hint">沙發→電視</div>
+              </div>
+            </button>
+            <button class="location-btn-full" onclick="selectLocation('🛏️', '主臥')">
+              <span class="location-btn-icon">🛏️</span>
+              <div class="location-btn-text">
+                <div>臥室床位</div>
+                <div class="location-btn-hint">床頭→床尾</div>
+              </div>
+            </button>
+          </div>
+        </div>
+        
+        <div class="location-section">
+          <div class="location-section-title">🏠 其他空間</div>
+          <div class="location-grid">
+            <button class="location-btn" onclick="selectLocation('🍳', '廚房')">
+              <span class="location-btn-icon">🍳</span>廚房
+            </button>
+            <button class="location-btn" onclick="selectLocation('📚', '書房')">
+              <span class="location-btn-icon">📚</span>書房
+            </button>
+            <button class="location-btn" onclick="selectLocation('🍽️', '餐廳')">
+              <span class="location-btn-icon">🍽️</span>餐廳
+            </button>
+            <button class="location-btn" onclick="selectLocation('🚿', '浴室')">
+              <span class="location-btn-icon">🚿</span>浴室
+            </button>
+            <button class="location-btn" onclick="selectLocation('🌿', '陽台')">
+              <span class="location-btn-icon">🌿</span>陽台
+            </button>
+            <button class="location-btn" onclick="selectLocation('🚶', '玄關')">
+              <span class="location-btn-icon">🚶</span>玄關
+            </button>
+            <button class="location-btn" onclick="selectLocation('💼', '辦公桌')">
+              <span class="location-btn-icon">💼</span>辦公桌
+            </button>
+            <button class="location-btn" onclick="selectLocation('🪑', '座位')">
+              <span class="location-btn-icon">🪑</span>座位
+            </button>
+            <button class="location-btn" onclick="selectLocation('📍', '其他')">
+              <span class="location-btn-icon">📍</span>其他
+            </button>
+          </div>
+        </div>
+        
+        <div class="location-custom">
+          <input type="text" class="location-custom-input" id="custom-location" placeholder="✏️ 自訂位置名稱..." maxlength="10">
+          <button class="location-btn" style="width:100%;" onclick="selectCustomLocation()">
+            確認自訂位置
+          </button>
+        </div>
+        
+        <button class="location-cancel" onclick="cancelLocation()">取消</button>
+      </div>
+      
+      <!-- 拍照成功大預覽 -->
+      <div class="photo-preview-overlay" id="photo-preview-overlay">
+        <div class="preview-card">
+          <div class="preview-header">📸 方位已記錄！</div>
+          <img class="preview-image" id="preview-image" src="" alt="照片">
+          <div class="preview-info">
+            <div class="preview-location" id="preview-location">--</div>
+            <div class="preview-direction" id="preview-direction">--</div>
+            <div class="preview-degree" id="preview-degree">--</div>
+            <div class="preview-time" id="preview-time">--</div>
+          </div>
+          <div class="preview-buttons">
+            <button class="preview-btn preview-btn-more" onclick="continuePhoto()">
+              📷 繼續拍攝
+            </button>
+            <button class="preview-btn preview-btn-done" onclick="closePreview()">
+              ✓ 完成
+            </button>
+          </div>
+        </div>
+      </div>
+      
+      <!-- 照片計數 -->
+      <div class="photo-count" id="photo-count" style="display:none;">
+        已拍攝 <span id="count-number">0</span> 張照片
+      </div>
+      
+      <!-- 照片列表 -->
+      <div class="photo-list" id="photo-list"></div>
+      
+      <!-- 動作按鈕 -->
+      <div class="action-buttons" id="action-buttons">
+        <button class="btn-action btn-clear" onclick="clearPhotos()">
+          🗑️ 清除全部
+        </button>
+        <button class="btn-action btn-analyze" onclick="analyzeAll()">
+          🔮 分析風水
+        </button>
+      </div>
+      
+      <p class="hint">可連續拍攝多張不同方位的照片</p>
+    </div>
+  </div>
+
+  <script>
+    let currentHeading = null;
+    let photos = [];
+
+    // 生成刻度
+    function generateTicks() {
+      const ticksGroup = document.getElementById('ticks');
+      let ticksHTML = '';
+      
+      for (let i = 0; i < 360; i += 5) {
+        const angle = i * Math.PI / 180;
+        const isMajor = i % 30 === 0;
+        const isMedium = i % 10 === 0;
+        
+        const outerR = 120;
+        const innerR = isMajor ? 100 : (isMedium ? 108 : 113);
+        
+        const x1 = 130 + outerR * Math.sin(angle);
+        const y1 = 130 - outerR * Math.cos(angle);
+        const x2 = 130 + innerR * Math.sin(angle);
+        const y2 = 130 - innerR * Math.cos(angle);
+        
+        const strokeWidth = isMajor ? 2 : 1;
+        const color = isMajor ? 'rgba(255,215,0,0.8)' : 'rgba(255,215,0,0.4)';
+        
+        ticksHTML += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${color}" stroke-width="${strokeWidth}"/>`;
+        
+        // 度數標籤 (每 30°)
+        if (isMajor && i !== 0 && i !== 90 && i !== 180 && i !== 270) {
+          const labelR = 92;
+          const lx = 130 + labelR * Math.sin(angle);
+          const ly = 130 - labelR * Math.cos(angle) + 4;
+          ticksHTML += `<text x="${lx}" y="${ly}" text-anchor="middle" fill="rgba(255,215,0,0.5)" font-size="10">${i}°</text>`;
+        }
+      }
+      
+      ticksGroup.innerHTML = ticksHTML;
+    }
+
+    // 初始化
+    function init() {
+      generateTicks();
+      
+      if (window.DeviceOrientationEvent) {
+        if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+          // iPhone iOS 13+ 需要請求權限
+          document.getElementById('permission-box').classList.remove('hidden');
+          document.getElementById('ready-box').classList.add('hidden');
+        } else {
+          // Android 或舊版 iOS，直接啟用
+          document.getElementById('permission-box').classList.add('hidden');
+          document.getElementById('ready-box').classList.remove('hidden');
+          startCompass();
+          enablePhotoButton();
+          
+          // 3秒後隱藏提示
+          setTimeout(() => {
+            document.getElementById('ready-box').classList.add('hidden');
+          }, 3000);
+        }
+      } else {
+        document.getElementById('direction-text').textContent = '此裝置不支援羅盤';
+        document.getElementById('permission-box').classList.add('hidden');
+        document.getElementById('ready-box').classList.add('hidden');
+      }
+    }
+
+    // 請求權限
+    async function requestPermission() {
+      try {
+        const permission = await DeviceOrientationEvent.requestPermission();
+        if (permission === 'granted') {
+          document.getElementById('permission-box').classList.add('granted');
+          document.getElementById('permission-box').querySelector('h3').textContent = '✅ 已授權';
+          document.getElementById('permission-box').querySelector('p').textContent = '羅盤功能已啟用';
+          document.getElementById('btn-permission').disabled = true;
+          document.getElementById('btn-permission').textContent = '✓ 授權成功';
+          
+          startCompass();
+          enablePhotoButton();
+          
+          setTimeout(() => {
+            document.getElementById('permission-box').classList.add('hidden');
+          }, 1500);
+        }
+      } catch (error) {
+        alert('請求權限失敗: ' + error.message);
+      }
+    }
+
+    function enablePhotoButton() {
+      document.getElementById('btn-photo').disabled = false;
+    }
+
+    function startCompass() {
+      window.addEventListener('deviceorientation', handleOrientation);
+      window.addEventListener('deviceorientationabsolute', handleOrientation);
+    }
+
+    function handleOrientation(event) {
+      let heading;
+      
+      if (event.webkitCompassHeading !== undefined) {
+        heading = event.webkitCompassHeading;
+      } else if (event.alpha !== null) {
+        heading = 360 - event.alpha;
+        if (heading >= 360) heading -= 360;
+        if (heading < 0) heading += 360;
+      }
+      
+      if (heading !== undefined && !isNaN(heading)) {
+        currentHeading = Math.round(heading);
+        updateUI(currentHeading);
+      }
+    }
+
+    function updateUI(heading) {
+      document.getElementById('degree-value').textContent = heading + '°';
+      document.getElementById('needle-wrapper').style.transform = `rotate(${heading}deg)`;
+      document.getElementById('direction-text').textContent = getDirectionText(heading);
+    }
+
+    function getDirectionText(h) {
+      if (h >= 337.5 || h < 22.5) return '北';
+      if (h >= 22.5 && h < 67.5) return '東北';
+      if (h >= 67.5 && h < 112.5) return '東';
+      if (h >= 112.5 && h < 157.5) return '東南';
+      if (h >= 157.5 && h < 202.5) return '南';
+      if (h >= 202.5 && h < 247.5) return '西南';
+      if (h >= 247.5 && h < 292.5) return '西';
+      if (h >= 292.5 && h < 337.5) return '西北';
+      return h + '°';
+    }
+
+    let pendingPhotoData = null;
+    let isFirstTime = true;
+    
+    function takePhoto() {
+      if (isFirstTime) {
+        // 第一次顯示建議清單
+        document.getElementById('guide-overlay').classList.add('show');
+      } else {
+        // 之後直接開相機
+        document.getElementById('camera-input').click();
+      }
+    }
+    
+    function startFromGuide() {
+      isFirstTime = false;
+      document.getElementById('guide-overlay').classList.remove('show');
+      setTimeout(() => {
+        document.getElementById('camera-input').click();
+      }, 100);
+    }
+    
+    function closeGuide() {
+      document.getElementById('guide-overlay').classList.remove('show');
+    }
+    
+    function selectLocation(icon, name) {
+      if (!pendingPhotoData) return;
+      
+      pendingPhotoData.location = { icon, name };
+      
+      const photo = { ...pendingPhotoData };
+      photos.push(photo);
+      
+      document.getElementById('location-selector').classList.remove('show');
+      renderPhotos();
+      
+      // 顯示大預覽
+      showPreview(photo.image, photo.direction, photo.degree, photo.fullTime, photo.location);
+      
+      pendingPhotoData = null;
+    }
+    
+    function selectCustomLocation() {
+      const input = document.getElementById('custom-location');
+      const name = input.value.trim();
+      if (name) {
+        selectLocation('📍', name);
+        input.value = '';
+      } else {
+        input.focus();
+      }
+    }
+    
+    function cancelLocation() {
+      document.getElementById('location-selector').classList.remove('show');
+      pendingPhotoData = null;
+    }
+
+    function handlePhoto(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const now = new Date();
+        const timeStr = now.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' });
+        const fullTimeStr = now.toLocaleString('zh-TW', {
+          month: 'numeric', day: 'numeric',
+          hour: '2-digit', minute: '2-digit'
+        });
+        
+        const direction = currentHeading !== null ? getDirectionText(currentHeading) : '未知';
+        const degree = currentHeading !== null ? currentHeading + '°' : '--';
+        
+        // 暫存照片資料，等用戶選擇位置
+        pendingPhotoData = {
+          id: Date.now(),
+          image: e.target.result,
+          time: timeStr,
+          fullTime: fullTimeStr,
+          direction: direction,
+          degree: degree,
+          heading: currentHeading,
+          location: null
+        };
+        
+        // 顯示位置選擇器
+        document.getElementById('location-selector').classList.add('show');
+      };
+      reader.readAsDataURL(file);
+      event.target.value = '';
+    }
+    
+    function showPreview(image, direction, degree, time, location) {
+      document.getElementById('preview-image').src = image;
+      document.getElementById('preview-location').textContent = location.icon + ' ' + location.name;
+      document.getElementById('preview-direction').textContent = direction;
+      document.getElementById('preview-degree').textContent = degree;
+      document.getElementById('preview-time').textContent = time;
+      document.getElementById('photo-preview-overlay').classList.add('show');
+    }
+    
+    function closePreview() {
+      document.getElementById('photo-preview-overlay').classList.remove('show');
+    }
+    
+    function continuePhoto() {
+      closePreview();
+      setTimeout(() => takePhoto(), 300);
+    }
+
+    function renderPhotos() {
+      const list = document.getElementById('photo-list');
+      const count = document.getElementById('photo-count');
+      const actions = document.getElementById('action-buttons');
+      
+      if (photos.length === 0) {
+        list.innerHTML = '';
+        count.style.display = 'none';
+        actions.classList.remove('show');
+        return;
+      }
+      
+      count.style.display = 'block';
+      document.getElementById('count-number').textContent = photos.length;
+      actions.classList.add('show');
+      
+      list.innerHTML = photos.map(p => `
+        <div class="photo-card">
+          <button class="photo-card-delete" onclick="deletePhoto(${p.id})">×</button>
+          <img src="${p.image}" alt="照片">
+          <div class="photo-card-info">
+            <div class="photo-card-location">${p.location?.icon || '📍'} ${p.location?.name || ''}</div>
+            <div class="photo-card-direction">${p.direction} ${p.degree}</div>
+            <div class="photo-card-time">${p.time}</div>
+          </div>
+        </div>
+      `).join('');
+      
+      // 滾動到最新照片
+      list.scrollLeft = list.scrollWidth;
+    }
+
+    function deletePhoto(id) {
+      photos = photos.filter(p => p.id !== id);
+      renderPhotos();
+    }
+
+    function clearPhotos() {
+      if (confirm('確定要清除所有照片嗎？')) {
+        photos = [];
+        renderPhotos();
+      }
+    }
+
+    function analyzeAll() {
+      if (photos.length === 0) {
+        alert('請先拍攝至少一張照片');
+        return;
+      }
+      
+      // 儲存到 localStorage
+      localStorage.setItem('fengshui_photos', JSON.stringify(photos));
+      
+      // 統計方位
+      const directions = photos.map(p => p.direction).join('、');
+      
+      alert(`🔮 風水分析功能開發中！\n\n已記錄 ${photos.length} 張照片\n方位：${directions}\n\n之後會根據這些方位 + 命盤，給出完整的風水建議！`);
+    }
+
+    init();
+  </script>
+</body>
+</html>

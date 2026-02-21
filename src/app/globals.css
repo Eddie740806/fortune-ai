@@ -1,0 +1,537 @@
+@import "tailwindcss";
+
+:root {
+  --color-gold: #ffd700;
+  --color-purple-dark: #1a1a3a;
+  --color-purple-light: #9d4edd;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial,
+    "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+  background: #0a0a1a;
+  color: white;
+  overflow-x: hidden;
+}
+
+/* 選取文字顏色 */
+::selection {
+  background: rgba(157, 78, 221, 0.4);
+  color: white;
+}
+
+/* 滾動條樣式 */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0a0a1a;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #9d4edd, #ffd700);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #b366e8, #ffe44d);
+}
+
+/* 標題閃耀效果 */
+@keyframes shimmer {
+  0% {
+    background-position: -200% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
+}
+
+.animate-shimmer {
+  animation: shimmer 3s ease-in-out infinite;
+}
+
+/* 金色光暈文字效果 */
+.text-glow-gold {
+  text-shadow: 0 0 20px rgba(255, 215, 0, 0.5),
+               0 0 40px rgba(255, 215, 0, 0.3),
+               0 0 60px rgba(255, 215, 0, 0.2);
+}
+
+/* 紫色光暈文字效果 */
+.text-glow-purple {
+  text-shadow: 0 0 20px rgba(157, 78, 221, 0.5),
+               0 0 40px rgba(157, 78, 221, 0.3);
+}
+
+/* 按鈕漸變效果 */
+.btn-glow {
+  box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
+  transition: box-shadow 0.3s ease;
+}
+
+.btn-glow:hover {
+  box-shadow: 0 0 30px rgba(255, 215, 0, 0.5),
+              0 0 60px rgba(255, 215, 0, 0.3);
+}
+
+/* 慢速旋轉動畫 */
+@keyframes spin-slow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin-slow {
+  animation: spin-slow 8s linear infinite;
+}
+
+/* 明顯的呼吸光暈動畫 */
+@keyframes glow-pulse {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.4), 0 0 40px rgba(255, 215, 0, 0.2);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(255, 215, 0, 0.8), 0 0 80px rgba(255, 215, 0, 0.4);
+    transform: scale(1.02);
+  }
+}
+
+.animate-glow-pulse {
+  animation: glow-pulse 2s ease-in-out infinite;
+}
+
+/* 紫色版光暈 */
+@keyframes glow-pulse-purple {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(168, 85, 247, 0.4), 0 0 40px rgba(168, 85, 247, 0.2);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(168, 85, 247, 0.8), 0 0 80px rgba(168, 85, 247, 0.4);
+    transform: scale(1.02);
+  }
+}
+
+.animate-glow-pulse-purple {
+  animation: glow-pulse-purple 2s ease-in-out infinite;
+}
+
+/* 雙色漸變光暈 */
+@keyframes glow-pulse-dual {
+  0%, 100% {
+    box-shadow: 0 0 30px rgba(255, 215, 0, 0.5), 0 0 60px rgba(168, 85, 247, 0.3);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 0 50px rgba(255, 215, 0, 0.8), 0 0 100px rgba(168, 85, 247, 0.5);
+    transform: scale(1.03);
+  }
+}
+
+.animate-glow-pulse-dual {
+  animation: glow-pulse-dual 2.5s ease-in-out infinite;
+}
+
+/* 流動漸層背景動畫 - 紫色版 */
+@keyframes gradient-flow-purple {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.animate-gradient-purple {
+  background: linear-gradient(270deg, #7c3aed, #4f46e5, #6366f1, #8b5cf6, #7c3aed);
+  background-size: 400% 400%;
+  animation: gradient-flow-purple 4s ease infinite;
+}
+
+/* 流動漸層 - 青藍色（易經） */
+.animate-gradient-cyan {
+  background: linear-gradient(270deg, #0891b2, #06b6d4, #22d3ee, #0ea5e9, #0891b2);
+  background-size: 400% 400%;
+  animation: gradient-flow-gold 4s ease infinite;
+}
+
+/* 流動漸層背景動畫 - 金色版 */
+@keyframes gradient-flow-gold {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.animate-gradient-gold {
+  background: linear-gradient(270deg, #f59e0b, #fbbf24, #f97316, #eab308, #f59e0b);
+  background-size: 400% 400%;
+  animation: gradient-flow-gold 4s ease infinite;
+}
+
+/* 流動漸層背景動畫 - 雙色版 */
+@keyframes gradient-flow-dual {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.animate-gradient-dual {
+  background: linear-gradient(270deg, #f59e0b, #7c3aed, #4f46e5, #f97316, #8b5cf6, #f59e0b);
+  background-size: 600% 600%;
+  animation: gradient-flow-dual 6s ease infinite;
+}
+
+/* 分類按鈕流動漸層 */
+.animate-gradient-flow {
+  animation: gradient-flow-gold 3s ease infinite;
+}
+
+/* AI 解讀內容樣式 */
+.interpretation-content h2 {
+  background: linear-gradient(90deg, rgba(157, 78, 221, 0.3), transparent);
+  border-left: 4px solid #ffd700;
+  padding: 12px 16px;
+  margin: 32px 0 20px 0;
+  border-radius: 0 8px 8px 0;
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #ffd700;
+}
+
+.interpretation-content h2:first-child {
+  margin-top: 0;
+}
+
+.interpretation-content p {
+  line-height: 1.9;
+  margin: 16px 0;
+  color: #e2e2f0;
+}
+
+.interpretation-content strong {
+  color: #c4b5fd;
+}
+
+/* 八字/紫微 標籤樣式 */
+.interpretation-content p:has(strong:first-child) strong:first-child {
+  display: inline-block;
+  margin-right: 8px;
+}
+
+/* 金句樣式 */
+.interpretation-content p:has(「) {
+  background: rgba(255, 215, 0, 0.1);
+  border-left: 3px solid #ffd700;
+  padding: 12px 16px;
+  margin: 20px 0;
+  border-radius: 0 8px 8px 0;
+  font-style: italic;
+  color: #ffd700;
+}
+
+/* 分隔線 */
+.interpretation-content hr {
+  border: none;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(157, 78, 221, 0.5), transparent);
+  margin: 24px 0;
+}
+
+/* 列表樣式 */
+.interpretation-content ul,
+.interpretation-content ol {
+  margin: 16px 0;
+  padding-left: 24px;
+}
+
+.interpretation-content li {
+  line-height: 1.8;
+  margin: 8px 0;
+  color: #e2e2f0;
+}
+
+/* 流年運勢圖動畫 */
+@keyframes pulse-slow {
+  0%, 100% {
+    opacity: 0.9;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.animate-pulse-slow {
+  animation: pulse-slow 3s ease-in-out infinite;
+}
+
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slide-up {
+  animation: slide-up 0.3s ease-out forwards;
+}
+
+@keyframes flow {
+  0% {
+    stroke-dashoffset: 0;
+  }
+  100% {
+    stroke-dashoffset: -30;
+  }
+}
+
+.animate-flow {
+  animation: flow 2s linear infinite;
+}
+
+/* 流動光點效果 */
+@keyframes glow-pulse {
+  0%, 100% {
+    filter: drop-shadow(0 0 8px rgba(139, 92, 246, 0.6));
+  }
+  50% {
+    filter: drop-shadow(0 0 20px rgba(139, 92, 246, 0.9));
+  }
+}
+
+.fortune-glow {
+  animation: glow-pulse 2s ease-in-out infinite;
+}
+
+/* ===== 列印樣式 ===== */
+@media print {
+  /* 基本重置 - 強制所有元素使用列印友善顏色 */
+  * {
+    color-adjust: exact !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  body {
+    background: white !important;
+    color: #1a1a1a !important;
+    font-size: 12pt;
+    line-height: 1.8;
+  }
+
+  /* 隱藏不需要列印的元素 */
+  .print\:hidden,
+  button,
+  nav,
+  .fixed {
+    display: none !important;
+  }
+
+  /* 所有背景強制白色 */
+  div, section, article, main, aside, header, footer {
+    background: white !important;
+    background-color: white !important;
+    background-image: none !important;
+  }
+
+  /* 背景效果移除 */
+  .bg-gradient-to-b,
+  .bg-gradient-to-br,
+  .bg-gradient-to-r,
+  [class*="bg-gradient"],
+  [class*="bg-purple"],
+  [class*="bg-amber"],
+  [class*="bg-slate"],
+  [class*="bg-indigo"],
+  [class*="from-"],
+  [class*="to-"],
+  [class*="via-"] {
+    background: white !important;
+    background-color: white !important;
+    background-image: none !important;
+  }
+
+  /* 所有文字強制深色 */
+  p, span, div, h1, h2, h3, h4, h5, h6, li, td, th, label {
+    color: #1a1a1a !important;
+  }
+
+  /* 文字顏色調整 - 更深的顏色 */
+  .text-white,
+  .text-gray-100,
+  .text-gray-200,
+  .text-gray-300,
+  .text-gray-400,
+  .text-gray-500,
+  [class*="text-white"],
+  [class*="text-gray"] {
+    color: #1a1a1a !important;
+  }
+
+  /* 金色文字 - 深棕色 */
+  .text-amber-300,
+  .text-amber-400,
+  .text-amber-200,
+  .text-amber-500,
+  .text-yellow-300,
+  .text-yellow-400,
+  [class*="text-amber"],
+  [class*="text-yellow"],
+  [class*="text-orange"] {
+    color: #78350f !important;
+    font-weight: 600 !important;
+  }
+
+  /* 紫色文字 - 深紫色 */
+  .text-purple-300,
+  .text-purple-400,
+  .text-purple-200,
+  .text-purple-500,
+  .text-indigo-300,
+  .text-indigo-400,
+  [class*="text-purple"],
+  [class*="text-indigo"],
+  [class*="text-violet"] {
+    color: #4c1d95 !important;
+    font-weight: 600 !important;
+  }
+
+  /* 邊框顏色 - 更明顯 */
+  [class*="border-purple"],
+  [class*="border-amber"],
+  [class*="border-gray"] {
+    border-color: #9ca3af !important;
+  }
+
+  /* 卡片樣式 - 添加邊框 */
+  .rounded-xl,
+  .rounded-2xl,
+  .rounded-lg {
+    background: #fafafa !important;
+    border: 1px solid #d1d5db !important;
+  }
+
+  /* 解讀內容列印樣式 */
+  .interpretation-content h2 {
+    background: none !important;
+    border-left: 3px solid #92400e !important;
+    color: #92400e !important;
+    page-break-after: avoid;
+  }
+
+  .interpretation-content p {
+    color: #333 !important;
+    orphans: 3;
+    widows: 3;
+  }
+
+  .interpretation-content strong {
+    color: #6b21a8 !important;
+  }
+
+  /* 追問卡片列印樣式 */
+  .interpretation-content + div {
+    page-break-inside: avoid;
+  }
+
+  /* 紫微命盤列印樣式 - 縮小以適應頁面 */
+  .grid.grid-cols-4 {
+    min-width: unset !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    font-size: 8pt !important;
+    transform: scale(0.85);
+    transform-origin: top left;
+    page-break-inside: avoid;
+  }
+
+  /* 命盤格子列印樣式 */
+  .grid.grid-cols-4 > div {
+    padding: 4px !important;
+    min-height: auto !important;
+  }
+
+  /* 命盤文字縮小 */
+  .grid.grid-cols-4 span,
+  .grid.grid-cols-4 p {
+    font-size: 7pt !important;
+    line-height: 1.3 !important;
+  }
+
+  /* 頁面設定 */
+  @page {
+    margin: 1.5cm;
+    size: A4;
+  }
+
+  /* 標題頁面斷開 */
+  h1, h2, h3 {
+    page-break-after: avoid;
+  }
+
+  /* 避免在卡片中間斷頁 */
+  .rounded-xl,
+  .rounded-2xl {
+    page-break-inside: avoid;
+  }
+
+  /* 漸層文字回復 */
+  .bg-clip-text {
+    -webkit-background-clip: unset !important;
+    background-clip: unset !important;
+    -webkit-text-fill-color: unset !important;
+    color: #333 !important;
+  }
+
+  /* 隱藏動畫效果 */
+  .animate-spin,
+  .animate-pulse,
+  .animate-gradient-gold,
+  .animate-gradient-purple,
+  .animate-gradient-dual {
+    animation: none !important;
+  }
+
+  /* 列印時間戳記 */
+  .print-timestamp {
+    display: block !important;
+    text-align: right;
+    font-size: 10pt;
+    color: #666 !important;
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #ddd;
+  }
+}

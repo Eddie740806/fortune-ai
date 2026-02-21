@@ -1,0 +1,283 @@
+'use client';
+
+import { useSearchParams } from 'next/navigation';
+import { useMemo, useState, Suspense, useRef, useEffect } from 'react';
+import Link from 'next/link';
+import ReactMarkdown from 'react-markdown';
+import { calculateZiweiChart, type ZiweiChart as ZiweiChartType } from '@/lib/ziwei/index';
+import ZiweiChart from '@/components/ZiweiChart';
+import FortuneTimeline from '@/components/FortuneTimeline';
+import LoadingAnimation from '@/components/LoadingAnimation';
+import FollowUpQuestions from '@/components/FollowUpQuestions';
+
+// 時辰對應小時
+const SHICHEN_TO_HOUR: Record<string, number> = {
+  '子': 23,
+  '丑': 1,
+  '寅': 3,
+  '卯': 5,
+  '辰': 7,
+  '巳': 9,
+  '午': 11,
+  '未': 13,
+  '申': 15,
+  '酉': 17,
+  '戌': 19,
+  '亥': 21,
+};
+
+interface FollowUpItem {
+  question: string;
+  answer: string;
+}
+
+function ZiweiResultContent() {
+  const searchParams = useSearchParams();
+  const [interpretation, setInterpretation] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [followUpHistory, setFollowUpHistory] = useState<FollowUpItem[]>([]);
+  const interpretationRef = useRef<HTMLDivElement>(null);
+  
+  const year = parseInt(searchParams.get('year') || '0');
+  const month = parseInt(searchParams.get('month') || '0');
+  const day = parseInt(searchParams.get('day') || '0');
+  const shichen = searchParams.get('shichen') || '';
+  const gender = searchParams.get('gender') as 'male' | 'female';
+  
+  const chart = useMemo(() => {
+    if (!year || !month || !day || !shichen || !gender) {
+      return null;
+    }
+    
+    const hour = SHICHEN_TO_HOUR[shichen] ?? 12;
+    
+    try {
+      return calculateZiweiChart(year, month, day, hour, 0, gender);
+    } catch (e) {
+      console.error('排盤失敗:', e);
+      return null;
+    }
+  }, [year, month, day, shichen, gender]);
+
+  // AI 解讀
+  const handleInterpret = async () => {
+    if (!chart || isLoading) return;
+
+    setIsLoading(true);
+    setInterpretation(null);
+    
+    // 自動滾動到解讀區域
+    setTimeout(() => {
+      interpretationRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
+
+    try {
+      const response = await fetch('/api/interpret', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chart }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        console.log('🔮 ========================');
+        console.log(`🔮 使用模型: ${data.model === 'pro' ? '💎 PRO' : '⚡ FLASH'}`);
+        console.log('🔮 ========================');
+        setInterpretation(data.interpretation);
+      } else {
+        setInterpretation('❌ ' + (data.error || '解讀生成失敗'));
+      }
+    } catch (error) {
+      console.error('API 錯誤:', error);
+      setInterpretation('❌ 網路錯誤，請稍後再試');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // 當解讀完成後滾動到解讀區域
+  useEffect(() => {
+    if (interpretation && interpretationRef.current) {
+      interpretationRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [interpretation]);
+
+  // 處理新追問
+  const handleNewFollowUp = (item: FollowUpItem) => {
+    setFollowUpHistory(prev => [...prev, item]);
+  };
+
+  if (!chart) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-[#0a0a1a] via-[#1a1a3a] to-[#0d0d2b] flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-400 text-xl mb-4">資料不完整或排盤失敗</p>
+          <Link 
+            href="/ziwei" 
+            className="text-purple-300 hover:text-amber-300 transition-colors"
+          >
+            ← 返回重新輸入
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <main className="min-h-screen bg-gradient-to-b from-[#0a0a1a] via-[#1a1a3a] to-[#0d0d2b] text-white print:bg-white print:text-black">
+      {/* 背景效果 */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none print:hidden">
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-600/15 rounded-full blur-[128px]" />
+        <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-amber-500/10 rounded-full blur-[100px]" />
+      </div>
+
+      {/* 頂部裝飾線 */}
+      <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-amber-500/50 to-transparent z-20 print:hidden" />
+
+      <div className="relative z-10 max-w-5xl mx-auto px-4 py-8">
+        {/* 列印時間戳記 */}
+        <div className="hidden print-timestamp">
+          報告產生時間：{new Date().toLocaleString('zh-TW', { 
+            year: 'numeric', 
+            month: '2-digit', 
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false 
+          }).replace(/\//g, '-')}
+        </div>
+
+        {/* 導航 */}
+        <nav className="mb-6 flex items-center justify-between print:hidden">
+          <Link 
+            href="/ziwei" 
+            className="text-purple-300 hover:text-amber-300 transition-colors flex items-center gap-2"
+          >
+            <span>←</span>
+            <span>重新排盤</span>
+          </Link>
+          <Link 
+            href="/" 
+            className="text-gray-500 hover:text-purple-300 transition-colors text-sm"
+          >
+            返回首頁
+          </Link>
+        </nav>
+
+        {/* 標題 */}
+        <header className="text-center mb-8">
+          <h1 className="text-3xl md:text-4xl font-bold mb-2 print:text-black">
+            <span className="bg-gradient-to-r from-purple-300 via-pink-300 to-amber-300 bg-clip-text text-transparent print:text-black print:bg-none">
+              紫微命盤
+            </span>
+          </h1>
+          <p className="text-gray-400 text-sm print:text-gray-600">
+            {year}年{month}月{day}日 {shichen}時 · {gender === 'male' ? '男' : '女'}命
+          </p>
+        </header>
+
+        {/* 命盤組件 */}
+        <ZiweiChart chart={chart} showDetails={true} />
+
+        {/* 流年運勢圖 */}
+        <div className="mt-8 print:hidden">
+          <FortuneTimeline chart={chart} />
+        </div>
+
+        {/* 浮動 AI 按鈕 - 只在沒有解讀時顯示 */}
+        {!interpretation && !isLoading && (
+          <button
+            onClick={handleInterpret}
+            disabled={isLoading}
+            className="fixed bottom-8 right-8 z-40 group print:hidden"
+          >
+            <div className="relative">
+              <div className="absolute inset-0 bg-gradient-to-r from-purple-500 to-indigo-500 rounded-full blur-lg opacity-70 group-hover:opacity-100 transition-opacity" />
+              <div className="relative flex items-center gap-3 px-6 py-4 animate-gradient-purple rounded-full font-bold text-white border-2 border-purple-300/50 shadow-2xl shadow-purple-900/50 group-hover:scale-105 group-hover:border-purple-300 transition-all duration-300 disabled:opacity-50">
+                <span className="text-2xl">✨</span>
+                <span>揭開命盤秘密</span>
+              </div>
+            </div>
+          </button>
+        )}
+
+        {/* 說明 */}
+        <div className="mt-8 p-6 bg-slate-900/50 rounded-xl border border-gray-700/50 print:bg-gray-100 print:border-gray-300">
+          <h3 className="text-lg font-bold text-amber-200 mb-3 print:text-amber-700">📖 命盤說明</h3>
+          <div className="grid md:grid-cols-2 gap-4 text-sm text-gray-400 print:text-gray-600">
+            <div>
+              <h4 className="text-purple-300 mb-2 print:text-purple-700">十四主星</h4>
+              <p>紫微、天機、太陽、武曲、天同、廉貞、天府、太陰、貪狼、巨門、天相、天梁、七殺、破軍。每顆主星有不同亮度（廟、旺、平、陷），影響吉凶程度。</p>
+            </div>
+            <div>
+              <h4 className="text-blue-300 mb-2 print:text-blue-700">六吉星</h4>
+              <p>左輔、右弼、文昌、文曲、天魁、天鉞。吉星入命帶來助力與貴人運。</p>
+            </div>
+            <div>
+              <h4 className="text-red-300 mb-2 print:text-red-700">六煞星</h4>
+              <p>擎羊、陀羅、火星、鈴星、地空、地劫。煞星帶來挑戰，但也可能激發潛能。</p>
+            </div>
+            <div>
+              <h4 className="text-emerald-300 mb-2 print:text-emerald-700">四化星</h4>
+              <p>化祿（財運）、化權（權勢）、化科（名聲）、化忌（障礙）。四化依年干而定，是流年運勢的關鍵。</p>
+            </div>
+          </div>
+        </div>
+
+        {/* AI 解讀區域 - 內嵌顯示 */}
+        {(isLoading || interpretation) && (
+          <div 
+            ref={interpretationRef}
+            className="mt-8 p-6 md:p-8 bg-gradient-to-b from-purple-900/30 to-indigo-900/20 rounded-2xl border border-purple-500/30 print:bg-white print:border-gray-300"
+          >
+            <h2 className="text-2xl font-bold text-amber-300 mb-6 flex items-center gap-3 print:text-amber-700">
+              <span>🔮</span>
+              <span>AI 命理解讀</span>
+            </h2>
+
+            {isLoading ? (
+              <LoadingAnimation type="ziwei" />
+            ) : interpretation ? (
+              <>
+                <div className="interpretation-content">
+                  <ReactMarkdown>{interpretation}</ReactMarkdown>
+                </div>
+                
+                {/* 追問區 */}
+                <FollowUpQuestions
+                  chartType="ziwei"
+                  chartData={{ chart }}
+                  originalInterpretation={interpretation}
+                  followUpHistory={followUpHistory}
+                  onNewFollowUp={handleNewFollowUp}
+                />
+              </>
+            ) : null}
+
+            {/* 底部提示 */}
+            {!isLoading && interpretation && (
+              <div className="mt-8 pt-4 border-t border-purple-500/20 text-center print:border-gray-300">
+                <p className="text-gray-500 text-xs print:text-gray-600">
+                  ⚠️ AI 解讀僅供參考，命盤是統計不是限制
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </main>
+  );
+}
+
+export default function ZiweiResultPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-to-b from-[#0a0a1a] via-[#1a1a3a] to-[#0d0d2b] flex items-center justify-center">
+        <div className="text-purple-300 animate-pulse">排盤計算中...</div>
+      </div>
+    }>
+      <ZiweiResultContent />
+    </Suspense>
+  );
+}
