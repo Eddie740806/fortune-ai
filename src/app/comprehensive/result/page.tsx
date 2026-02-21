@@ -675,6 +675,30 @@ function ComprehensiveResultContent() {
               </div>
             )}
 
+            {/* 延伸分析：關係合盤 */}
+            {!isLoading && interpretation && isSaved && (
+              <div className="mt-8 pt-6 border-t border-amber-500/20">
+                <div className="bg-gradient-to-r from-purple-500/10 to-pink-500/10 rounded-xl p-6 border border-purple-500/20">
+                  <h3 className="text-lg font-bold text-white mb-2 flex items-center gap-2">
+                    <span>💫</span>
+                    <span>延伸分析：關係合盤</span>
+                  </h3>
+                  <p className="text-white/60 text-sm mb-4">
+                    想知道你跟老闆、情人、合夥人的緣分？用八字合盤分析你們的契合度！
+                  </p>
+                  <Link
+                    href="/relationship"
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg
+                               bg-gradient-to-r from-purple-500 to-pink-500 text-white font-medium
+                               hover:from-purple-600 hover:to-pink-600 transition-all"
+                  >
+                    <span>🔮</span>
+                    <span>開始合盤分析</span>
+                  </Link>
+                </div>
+              </div>
+            )}
+
             {/* 底部提示 */}
             {!isLoading && interpretation && (
               <div className="mt-8 pt-4 border-t border-amber-500/20 text-center print:border-gray-300">

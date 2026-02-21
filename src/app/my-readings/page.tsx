@@ -210,6 +210,19 @@ export default function MyReadingsPage() {
                           </span>
                         </div>
                       </Link>
+                      
+                      {/* 合盤按鈕 */}
+                      <Link
+                        href={`/relationship?from=${reading.id}`}
+                        className="inline-flex items-center gap-1.5 mt-3 px-3 py-1.5 
+                                   bg-gradient-to-r from-purple-500/20 to-pink-500/20 
+                                   border border-purple-500/30 rounded-lg
+                                   text-purple-300 text-sm hover:from-purple-500/30 hover:to-pink-500/30 
+                                   transition-all"
+                      >
+                        <span>💫</span>
+                        <span>與他人合盤</span>
+                      </Link>
                     </div>
                     
                     <button
