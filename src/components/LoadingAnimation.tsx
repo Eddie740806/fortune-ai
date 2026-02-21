@@ -116,6 +116,13 @@ export default function LoadingAnimation({ type }: LoadingAnimationProps) {
         <p className="text-gray-500 text-sm mt-4">
           融合千年古籍智慧，為您深度解析...
         </p>
+        
+        {type === 'comprehensive' && (
+          <p className="text-amber-400/70 text-sm mt-3 flex items-center justify-center gap-2">
+            <span className="animate-pulse">⏳</span>
+            <span>雙系統深度分析中，預計需要 1-2 分鐘，請耐心等候</span>
+          </p>
+        )}
       </div>
     </div>
   );

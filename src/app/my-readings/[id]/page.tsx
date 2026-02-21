@@ -37,14 +37,7 @@ export default function ReadingDetailPage() {
   const fetchReading = async () => {
     const supabase = createClient();
     
-    // 先檢查是否登入
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      setError('請先登入');
-      setLoading(false);
-      return;
-    }
-
+    // RLS 已開放，直接查詢
     const { data, error } = await supabase
       .from('readings')
       .select('*')

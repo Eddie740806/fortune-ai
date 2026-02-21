@@ -4,6 +4,7 @@ import { useSearchParams } from 'next/navigation';
 import { useMemo, useState, Suspense, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { calculateZiweiChart, type ZiweiChart as ZiweiChartType } from '@/lib/ziwei/index';
 import { calculateBazi, type BaziResult, DI_ZHI } from '@/lib/bazi';
 import ZiweiChart from '@/components/ZiweiChart';
@@ -67,7 +68,7 @@ function ComprehensiveResultContent() {
     }
   }, []);
 
-  // 保存紀錄到 Supabase
+  // 保存紀錄到 Supabase（透過 API）
   const handleSaveReading = async () => {
     if (!interpretation || isSaving || isSaved) return;
 
@@ -79,17 +80,31 @@ function ComprehensiveResultContent() {
 
     setIsSaving(true);
     try {
-      const { error } = await supabase.from('readings').insert({
-        user_id: user.id,
-        name,
-        birth_info: { year, month, day, hour: shichen, gender },
-        interpretation,
-        reading_type: 'comprehensive',
+      const res = await fetch('/api/readings/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: user.id,
+          name,
+          birthInfo: { year, month, day, hour: shichen, gender },
+          interpretation,
+          readingType: 'comprehensive',
+        }),
       });
 
-      if (error) {
-        console.error('保存失敗:', error);
-        alert('保存失敗，請稍後再試');
+      const data = await res.json();
+
+      if (!res.ok) {
+        console.error('保存失敗:', data.error);
+        if (data.error === '用戶不存在，請重新登入') {
+          // 清除無效的 localStorage
+          localStorage.removeItem('fortune_user');
+          setUser(null);
+          alert('登入已過期，請重新登入');
+          setShowAuth(true);
+        } else {
+          alert(data.error || '保存失敗，請稍後再試');
+        }
       } else {
         setIsSaved(true);
       }
@@ -108,14 +123,18 @@ function ComprehensiveResultContent() {
     if (newUser && interpretation && !isSaved) {
       setIsSaving(true);
       try {
-        const { error } = await supabase.from('readings').insert({
-          user_id: newUser.id,
-          name,
-          birth_info: { year, month, day, hour: shichen, gender },
-          interpretation,
-          reading_type: 'comprehensive',
+        const res = await fetch('/api/readings/save', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: newUser.id,
+            name,
+            birthInfo: { year, month, day, hour: shichen, gender },
+            interpretation,
+            readingType: 'comprehensive',
+          }),
         });
-        if (!error) {
+        if (res.ok) {
           setIsSaved(true);
         }
       } catch (e) {
@@ -171,7 +190,11 @@ function ComprehensiveResultContent() {
     }, 100);
 
     try {
-      const response = await fetch('/api/interpret-comprehensive', {
+      // 用 URL 參數 ?rag=1 來測試 RAG 版本
+      const useRag = searchParams.get('rag') === '1';
+      const apiEndpoint = useRag ? '/api/interpret-comprehensive-rag' : '/api/interpret-comprehensive';
+      
+      const response = await fetch(apiEndpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
@@ -577,7 +600,28 @@ function ComprehensiveResultContent() {
             ) : interpretation ? (
               <>
                 <div className="interpretation-content">
-                  <ReactMarkdown>{interpretation}</ReactMarkdown>
+                  <ReactMarkdown 
+                    remarkPlugins={[remarkGfm]}
+                    components={{
+                      table: ({ children }) => (
+                        <div className="overflow-x-auto my-4">
+                          <table className="w-full border-collapse text-sm">{children}</table>
+                        </div>
+                      ),
+                      thead: ({ children }) => (
+                        <thead className="bg-amber-900/50 text-amber-200">{children}</thead>
+                      ),
+                      th: ({ children }) => (
+                        <th className="border border-amber-500/30 px-3 py-2 text-left font-semibold">{children}</th>
+                      ),
+                      td: ({ children }) => (
+                        <td className="border border-amber-500/20 px-3 py-2 text-gray-200">{children}</td>
+                      ),
+                      tr: ({ children }) => (
+                        <tr className="hover:bg-amber-900/20 transition-colors">{children}</tr>
+                      ),
+                    }}
+                  >{interpretation}</ReactMarkdown>
                 </div>
                 
                 {/* 追問區 */}

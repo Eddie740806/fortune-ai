@@ -37,6 +37,7 @@ export default function FollowUpQuestions({
   const [limitMessage, setLimitMessage] = useState('');
   const [hoursUntilReset, setHoursUntilReset] = useState(0);
   const [showQuestionPicker, setShowQuestionPicker] = useState(false);
+  const [pendingQuestion, setPendingQuestion] = useState<string | null>(null); // 待確認的問題
   const loadingRef = useRef<HTMLDivElement>(null);
 
   // 更新限制狀態
@@ -306,7 +307,7 @@ export default function FollowUpQuestions({
                 {selectedCategory.questions.map((question, index) => (
                   <button
                     key={index}
-                    onClick={() => handleAskQuestion(question)}
+                    onClick={() => setPendingQuestion(question)}
                     className="w-full text-left p-3 bg-gradient-to-r from-purple-800/40 via-purple-700/30 to-purple-800/40 hover:from-purple-700/50 hover:via-purple-600/40 hover:to-purple-700/50 rounded-lg border border-purple-500/30 hover:border-purple-400/50 transition-all text-purple-200 hover:text-white"
                   >
                     {question}
@@ -324,14 +325,14 @@ export default function FollowUpQuestions({
                     onChange={(e) => setCustomQuestion(e.target.value)}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' && customQuestion.trim()) {
-                        handleAskQuestion(customQuestion);
+                        setPendingQuestion(customQuestion);
                       }
                     }}
                     placeholder="輸入你想問的問題..."
                     className="flex-1 px-4 py-3 bg-gradient-to-r from-purple-900/40 via-purple-800/30 to-purple-900/40 border border-purple-500/30 rounded-lg text-white placeholder-purple-400/50 focus:outline-none focus:border-purple-400"
                   />
                   <button
-                    onClick={() => handleAskQuestion(customQuestion)}
+                    onClick={() => setPendingQuestion(customQuestion)}
                     disabled={!customQuestion.trim()}
                     className="px-6 py-3 bg-gradient-to-r from-amber-500 to-orange-500 rounded-lg font-medium text-white hover:from-amber-400 hover:to-orange-400 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   >
@@ -341,6 +342,42 @@ export default function FollowUpQuestions({
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {/* 確認送出彈窗 */}
+      {pendingQuestion && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div 
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            onClick={() => setPendingQuestion(null)}
+          />
+          <div className="relative bg-gradient-to-br from-[#1a1a3a] to-[#0d0d2b] rounded-2xl border border-purple-500/30 shadow-2xl p-6 max-w-md w-full">
+            <h3 className="text-lg font-bold text-white mb-4">確認送出問題？</h3>
+            <p className="text-purple-200 mb-6 p-3 bg-purple-900/30 rounded-lg">
+              「{pendingQuestion}」
+            </p>
+            <p className="text-amber-400/80 text-sm mb-4">
+              ⚠️ 每次追問會消耗一次額度（剩餘 {remaining} 次）
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setPendingQuestion(null)}
+                className="flex-1 py-3 bg-gray-600 hover:bg-gray-500 rounded-xl text-white font-medium transition-colors"
+              >
+                取消
+              </button>
+              <button
+                onClick={() => {
+                  handleAskQuestion(pendingQuestion);
+                  setPendingQuestion(null);
+                }}
+                className="flex-1 py-3 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-400 hover:to-pink-400 rounded-xl text-white font-medium transition-colors"
+              >
+                確認送出
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

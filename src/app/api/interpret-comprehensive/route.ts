@@ -1,13 +1,19 @@
 import { NextRequest } from 'next/server';
+import { retrieveComprehensiveKnowledge, formatKnowledgeForPrompt } from '@/lib/rag/retriever';
 
 // 使用 Edge Runtime
 export const runtime = 'edge';
 
-// 八字+紫微雙系統綜合分析 Prompt
-const SYSTEM_PROMPT = `你是一位資深命理師，精通八字命理與紫微斗數雙系統。
+// 八字+紫微雙系統綜合分析 Prompt（RAG 增強版）
+const SYSTEM_PROMPT = `你是一位命理報告撰寫師，精通八字命理與紫微斗數雙系統。
+
+【最重要的規則】
+⚠️ 系統已經提供「知識庫內容」，你必須以這些內容為基礎撰寫！
+⚠️ 日主、主星、宮位等資料以「命盤摘要」為準，絕對不能寫錯！
+⚠️ 不要自己「發明」或「推測」命理內容，所有解讀必須有知識庫依據！
 
 【核心任務】
-你的解盤要讓命主讀完第一段就覺得：「這根本就是在說我！」
+根據系統提供的知識庫內容，組織成讓命主讀完就覺得「這根本就是在說我！」的報告。
 
 【心理學寫作技巧】
 - 「你是那種...的人」— 讓用戶自動代入
@@ -19,20 +25,23 @@ const SYSTEM_PROMPT = `你是一位資深命理師，精通八字命理與紫微
 - 每章節結尾必附「命理師金句」
 
 【必須輸出的章節】：
-1. ☯️ 命格總論（開盤金句、八字格局、紫微命宮）
-2. 🎭 性格深度剖析（八字+紫微+雙系統交叉）
-3. 🔮 過去驗證（3-5個年份區間）
-4. 💼 事業運（八字+紫微+趨吉策略）
-5. 💰 財運（八字+紫微+趨吉策略）
-6. ❤️ 感情運（八字+紫微+趨吉策略）
-7. 🩺 健康提醒
-8. 📅 流年劇情（五幕式）
-9. 🎯 趨吉避凶行動指南
-10. 🗺️ 未來三年戰略地圖（表格）
-11. 👥 貴人與小人
-12. 🏁 結語與驗證問句（3題）
+1. ☯️ 命格總論（根據知識庫的日主和命宮主星內容撰寫）
+2. 🎭 性格深度剖析（整合八字日主 + 紫微主星的性格特點）
+3. 💼 事業運（根據知識庫的事業傾向撰寫）
+4. 💰 財運（根據知識庫的財運相關內容撰寫）
+5. ❤️ 感情運（根據知識庫的感情特質撰寫）
+6. 🩺 健康提醒（根據知識庫的健康對應撰寫）
+7. 🎯 趨吉避凶建議（根據知識庫的「需要注意」整合）
+8. 🗺️ 未來發展建議（根據知識庫的事業和建議內容）
+9. 🏁 結語與驗證問句（3題）
 
-字數：至少3000字`;
+【禁止事項】：
+- 不要說「建議提供完整出生時辰」— 用戶已經提供完整資料
+- 不要說「如需更精準解盤」— 這已經是最完整的解盤
+- 不要加免責聲明 — 系統已經有提示
+- 不要自己編造命理內容 — 必須基於知識庫
+
+字數：2000-3500字`;
 
 export async function POST(request: NextRequest) {
   try {
@@ -49,24 +58,43 @@ export async function POST(request: NextRequest) {
     const baziInfo = formatBaziInfo(baziResult);
     const ziweiInfo = formatZiweiInfo(ziweiChart);
 
+    // 🔍 RAG 檢索：根據命盤提取知識庫內容
+    const knowledge = retrieveComprehensiveKnowledge(baziResult, ziweiChart);
+    const knowledgeText = formatKnowledgeForPrompt(knowledge);
+
     const currentYear = new Date().getFullYear();
     const birthYear = birthInfo?.year || 1990;
     const age = currentYear - birthYear;
 
-    const userPrompt = `請為以下命主進行八字+紫微雙系統綜合解讀：
+    // 從摘要中提取日主
+    const dayGanMatch = knowledge.summary.match(/日主：(.)/);
+    const dayGan = dayGanMatch ? dayGanMatch[1] : '';
 
-命主：${birthYear}年生，現年${age}歲，${birthInfo?.gender === 'male' ? '男' : '女'}
+    const userPrompt = `請為以下命主撰寫命理報告：
 
-【八字命盤】
+【命主資訊】
+出生年：${birthYear}年
+現年：${age}歲
+性別：${birthInfo?.gender === 'male' ? '男' : '女'}
+當前年份：${currentYear}年
+
+【原始命盤資料】
 ${baziInfo}
 
-【紫微斗數命盤】
 ${ziweiInfo}
 
-⚠️ 重要：
-- 當前是${currentYear}年
-- 命主現年${age}歲
-- 必須完整輸出所有12個章節`;
+---
+
+【知識庫內容 - 請以此為基礎撰寫】
+${knowledgeText}
+
+---
+
+⚠️ 重要提醒：
+- 日主是「${dayGan}」，絕對不能寫錯！
+- 所有命理解讀必須來自上面的「知識庫內容」
+- 不要自己發明命理內容
+- 完整輸出所有章節`;
 
     // 直接呼叫 Anthropic API（不用 SDK 以減少 bundle 大小）
     const response = await fetch('https://api.anthropic.com/v1/messages', {
@@ -200,21 +228,38 @@ function formatZiweiInfo(chart: any): string {
 
 function formatBaziInfo(bazi: any): string {
   const lines: string[] = [];
+  
+  // 支援兩種結構：yearPillar 或 year
+  const yearPillar = bazi.yearPillar || bazi.year;
+  const monthPillar = bazi.monthPillar || bazi.month;
+  const dayPillar = bazi.dayPillar || bazi.day;
+  const hourPillar = bazi.hourPillar || bazi.hour;
+  
   lines.push('【四柱】');
-  lines.push(`年柱：${bazi.year?.gan}${bazi.year?.zhi}`);
-  lines.push(`月柱：${bazi.month?.gan}${bazi.month?.zhi}`);
-  lines.push(`日柱：${bazi.day?.gan}${bazi.day?.zhi}（日主）`);
-  lines.push(`時柱：${bazi.hour?.gan}${bazi.hour?.zhi}`);
-  lines.push(`\n日主：${bazi.day?.gan}（${bazi.dayMaster?.element || ''}）${bazi.dayMaster?.strength || ''}`);
+  lines.push(`年柱：${yearPillar?.gan}${yearPillar?.zhi}`);
+  lines.push(`月柱：${monthPillar?.gan}${monthPillar?.zhi}`);
+  lines.push(`日柱：${dayPillar?.gan}${dayPillar?.zhi}（日主）`);
+  lines.push(`時柱：${hourPillar?.gan}${hourPillar?.zhi}`);
+  
+  // 日主五行
+  const dayGanWuXing = dayPillar?.ganWuXing || bazi.dayMaster?.element || '';
+  lines.push(`\n日主：${dayPillar?.gan}（${dayGanWuXing}）${bazi.dayMaster?.strength || ''}`);
+  
+  // 十神（如果有的話）
+  if (bazi.yearShiShen) {
+    lines.push(`\n【十神】`);
+    lines.push(`年柱：${bazi.yearShiShen}｜月柱：${bazi.monthShiShen}｜時柱：${bazi.hourShiShen}`);
+  }
   
   if (bazi.daYun?.length > 0) {
     lines.push('\n【大運】');
     const currentYear = new Date().getFullYear();
-    const birthYear = bazi.birthYear || 1990;
+    const birthYear = bazi.lunarInfo?.year || bazi.birthYear || 1990;
     const age = currentYear - birthYear;
     for (const dy of bazi.daYun.slice(0, 8)) {
+      const ganZhi = dy.ganZhi || `${dy.gan}${dy.zhi}`;
       const isCurrent = age >= dy.startAge && age < dy.startAge + 10;
-      lines.push(`${dy.startAge}-${dy.startAge + 9}歲：${dy.gan}${dy.zhi}${isCurrent ? ' ⭐當前' : ''}`);
+      lines.push(`${dy.startAge}-${dy.startAge + 9}歲：${ganZhi}${isCurrent ? ' ⭐當前' : ''}`);
     }
   }
   

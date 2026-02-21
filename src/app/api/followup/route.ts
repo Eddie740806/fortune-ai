@@ -8,6 +8,12 @@ const anthropic = new Anthropic({
 
 const SYSTEM_PROMPT = `你是一位資深命理師，正在回答用戶針對他們命盤的追問。
 
+【最重要】
+⚠️ 日主（日柱天干）是命盤中最核心的資訊，絕對不能搞錯！
+- 命盤摘要中標記「⚠️ 日主」的就是正確的日主
+- 如果用戶質疑日主，以命盤摘要中的資料為準
+- 不要憑空「更正」或「修改」日主
+
 【回答原則】
 1. 直接切入重點，不要重複命盤基本資訊
 2. 針對用戶的具體問題給出明確建議
@@ -85,12 +91,19 @@ function formatChartSummary(chartType: string, data: any): string {
   const lines: string[] = [];
 
   if (chartType === 'bazi' || chartType === 'comprehensive') {
-    // 八字摘要
-    if (data.baziResult || data.dayPillar) {
-      const bazi = data.baziResult || data;
+    // 八字摘要 - 支援多種結構
+    const bazi = data.baziResult || data;
+    const dayPillar = bazi.dayPillar || bazi.day;
+    const yearPillar = bazi.yearPillar || bazi.year;
+    const monthPillar = bazi.monthPillar || bazi.month;
+    const hourPillar = bazi.hourPillar || bazi.hour;
+    
+    if (dayPillar) {
       lines.push('【八字】');
-      lines.push(`日主：${bazi.dayPillar?.gan || ''}${bazi.dayPillar?.ganWuXing || ''}`);
-      lines.push(`四柱：${bazi.yearPillar?.gan || ''}${bazi.yearPillar?.zhi || ''} ${bazi.monthPillar?.gan || ''}${bazi.monthPillar?.zhi || ''} ${bazi.dayPillar?.gan || ''}${bazi.dayPillar?.zhi || ''} ${bazi.hourPillar?.gan || ''}${bazi.hourPillar?.zhi || ''}`);
+      const dayGan = dayPillar.gan || '';
+      const dayWuXing = dayPillar.ganWuXing || '';
+      lines.push(`⚠️ 日主：${dayGan}${dayWuXing ? `（${dayWuXing}）` : ''}`);
+      lines.push(`四柱：${yearPillar?.gan || ''}${yearPillar?.zhi || ''} ${monthPillar?.gan || ''}${monthPillar?.zhi || ''} ${dayPillar?.gan || ''}${dayPillar?.zhi || ''} ${hourPillar?.gan || ''}${hourPillar?.zhi || ''}`);
     }
   }
 
