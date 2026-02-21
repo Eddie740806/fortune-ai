@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
@@ -45,7 +45,7 @@ interface MyReading {
   };
 }
 
-export default function RelationshipPage() {
+function RelationshipContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const myReadingId = searchParams.get('from'); // 從哪個命盤來的
@@ -363,5 +363,17 @@ export default function RelationshipPage() {
         </div>
       </main>
     </div>
+  );
+}
+
+export default function RelationshipPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-to-b from-[#0a0a1a] via-[#1a1a3a] to-[#0a0a1a] flex items-center justify-center">
+        <div className="text-white/60">載入中...</div>
+      </div>
+    }>
+      <RelationshipContent />
+    </Suspense>
   );
 }
